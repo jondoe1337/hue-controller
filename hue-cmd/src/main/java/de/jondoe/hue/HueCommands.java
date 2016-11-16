@@ -116,4 +116,9 @@ public class HueCommands
 
         phHueSDK.getSelectedBridge().updateLightState(lightId, lightState, null);
     }
+
+    public void close()
+    {
+        phHueSDK.destroySDK();
+    }
 }

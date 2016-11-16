@@ -66,6 +66,7 @@ public class CommandLineInterface
                         System.out.println(HueCommands.CommonColors.values());
                         break;
                     case EXIT:
+                        cmds.close();
                         return;
                     default:
                         defaultCmd(cmd);
