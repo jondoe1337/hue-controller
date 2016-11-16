@@ -34,6 +34,7 @@ public class CommandLineInterface
             Splitter splitter = Splitter.on(' ').trimResults().omitEmptyStrings();
             while (true)
             {
+                System.out.print("~");
                 String inputString = scanner.next();
                 ArrayList<String> cmdList = Lists.newArrayList(splitter.split(inputString));
 
@@ -125,16 +126,24 @@ public class CommandLineInterface
 
     private void printHelp()
     {
+        System.out.println("- Philips Hue cmdline client -");
+        System.out.println();
         System.out.println("Follwowing commands are given:");
-        System.out.println(EXIT + "\t- exit");
-        System.out.println(HELP + "\t- prints this help");
-        System.out.println(DISCOVER + "\t- starts discovery mode to find Hue bridges");
-        System.out.println(CONNECT_LAST + "\t- connects to most recent Hue bridge");
-        System.out.println(CONNECT + "\t- connects to the Hue bridge with the given [MAC-Address]");
-        System.out.println(SHOW_LIGHTS + "\t- lists all the Hue lights, that are registered with the current connected Hue bridge");
-        System.out.println(LIST_COLORS + "\t- lists the available colors");
-        System.out.println(SET_LIGHT_STATE + "\t- sets the state of the given Hue [lightId], [color] and the boolean [on/off-state]");
+        System.out.println(format(EXIT, "- exit"));
+        System.out.println(format(HELP, "- prints this help"));
+        System.out.println(format(DISCOVER, "- starts discovery mode to find Hue bridges"));
+        System.out.println(format(CONNECT_LAST, "- connects to most recent Hue bridge"));
+        System.out.println(format(CONNECT, "- connects to the Hue bridge with the given [MAC-Address]"));
+        System.out.println(format(SHOW_LIGHTS, "- lists all the Hue lights, that are registered with the current connected Hue bridge"));
+        System.out.println(format(LIST_COLORS, "- lists the available colors"));
+        System.out.println(format(SET_LIGHT_STATE, "- sets the state of the given Hue [lightId], [color] and the boolean [on/off-state]"));
+        System.out.println();
         System.out.println("The Hue system is a registered trademark of Philips.");
+    }
+
+    private String format(String cmd, String desc)
+    {
+        return String.format("%-30s %s", cmd, desc);
     }
 
     private void defaultCmd(String cmd)
