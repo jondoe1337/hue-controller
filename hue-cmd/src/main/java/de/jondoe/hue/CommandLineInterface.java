@@ -18,6 +18,7 @@ public class CommandLineInterface
     private static final String CONNECT = "connect";
     private static final String SHOW_LIGHTS = "showLights";
     private static final String SET_LIGHT_STATE = "setLightState";
+    private static final String LIST_COLORS = "listColors";
     private static final String PATTERN_MAC = "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$";
     private HueCommands cmds;
 
@@ -60,6 +61,9 @@ public class CommandLineInterface
                         break;
                     case SET_LIGHT_STATE:
                         setLightState(cmdList);
+                        break;
+                    case LIST_COLORS:
+                        System.out.println(HueCommands.CommonColors.values());
                         break;
                     case EXIT:
                         return;
@@ -125,6 +129,10 @@ public class CommandLineInterface
         System.out.println(HELP + "\t- prints this help");
         System.out.println(DISCOVER + "\t- starts discovery mode to find Hue bridges");
         System.out.println(CONNECT_LAST + "\t- connects to most recent Hue bridge");
+        System.out.println(CONNECT + "\t- connects to the Hue bridge with the given [MAC-Address]");
+        System.out.println(SHOW_LIGHTS + "\t- lists all the Hue lights, that are registered with the current connected Hue bridge");
+        System.out.println(LIST_COLORS + "\t- lists the available colors");
+        System.out.println(SET_LIGHT_STATE + "\t- sets the state of the given Hue [lightId], [color] and the boolean [on/off-state]");
         System.out.println("The Hue system is a registered trademark of Philips.");
     }
 

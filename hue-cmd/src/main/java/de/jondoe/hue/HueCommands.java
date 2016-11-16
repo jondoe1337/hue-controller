@@ -14,7 +14,7 @@ import com.philips.lighting.model.PHLightState;
 
 public class HueCommands
 {
-    private enum CommonColors
+    public enum CommonColors
     {
      WHITE(255, 255, 255);
 
