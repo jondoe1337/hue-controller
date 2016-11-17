@@ -1,6 +1,7 @@
 package de.jondoe.hue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
@@ -10,7 +11,6 @@ import com.philips.lighting.model.PHLight;
 
 public class CommandLineInterface
 {
-
     private static final String EXIT = "exit";
     private static final String HELP = "help";
     private static final String DISCOVER = "discover";
@@ -35,7 +35,7 @@ public class CommandLineInterface
             while (true)
             {
                 System.out.print("~");
-                String inputString = scanner.next();
+                String inputString = scanner.nextLine();
                 ArrayList<String> cmdList = Lists.newArrayList(splitter.split(inputString));
 
                 if (cmdList.isEmpty())
@@ -64,7 +64,7 @@ public class CommandLineInterface
                         setLightState(cmdList);
                         break;
                     case LIST_COLORS:
-                        System.out.println(HueCommands.CommonColors.values());
+                        System.out.println(Arrays.asList(HueCommands.CommonColors.values()));
                         break;
                     case EXIT:
                         cmds.close();
@@ -78,11 +78,11 @@ public class CommandLineInterface
 
     private void setLightState(ArrayList<String> cmdList)
     {
-        if (cmdList.size() != 3)
+        if (cmdList.size() != 4)
         {
             throw new IllegalArgumentException("Light-ID, CommonColor and State must be given!");
         }
-        cmds.setLightState(cmdList.get(0), cmdList.get(1), Boolean.parseBoolean(cmdList.get(2)));
+        cmds.setLightState(cmdList.get(1), cmdList.get(2), Boolean.parseBoolean(cmdList.get(3)));
     }
 
     private void printLights()
@@ -96,13 +96,13 @@ public class CommandLineInterface
 
     private void connectToNewBridge(ArrayList<String> cmdList)
     {
-        if (cmdList.size() != 1)
+        if (cmdList.size() != 2)
         {
             System.out.println("The Bridge-ID must be given!");
         }
         else
         {
-            String macAddress = cmdList.get(0);
+            String macAddress = cmdList.get(1);
             if (!macAddress.matches(PATTERN_MAC))
             {
                 throw new IllegalArgumentException("Given ID is not a MAC-Address!");
