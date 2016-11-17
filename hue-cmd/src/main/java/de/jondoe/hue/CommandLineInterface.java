@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
@@ -11,6 +14,7 @@ import com.philips.lighting.model.PHLight;
 
 public class CommandLineInterface
 {
+    private static final String PATTERN_MAC = "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$";
     private static final String EXIT = "exit";
     private static final String HELP = "help";
     private static final String DISCOVER = "discover";
@@ -19,8 +23,10 @@ public class CommandLineInterface
     private static final String SHOW_LIGHTS = "showLights";
     private static final String SET_LIGHT_STATE = "setLightState";
     private static final String LIST_COLORS = "listColors";
-    private static final String PATTERN_MAC = "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$";
+    private static final String STOP_PLAN = "stopPlan";
+    private static final String SCHEDULE_PLAN = "startPlan";
     private HueCommands cmds;
+    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 
     public CommandLineInterface(HueCommands hueCommands)
     {
@@ -64,16 +70,48 @@ public class CommandLineInterface
                         setLightState(cmdList);
                         break;
                     case LIST_COLORS:
-                        System.out.println(Arrays.asList(HueCommands.CommonColors.values()));
+                        System.out.println(Arrays.asList(CommonColors.values()));
+                        break;
+                    case SCHEDULE_PLAN:
+                        schedulePlan();
+                        break;
+                    case STOP_PLAN:
+                        stopPlan();
                         break;
                     case EXIT:
-                        cmds.close();
+                        close();
                         return;
                     default:
                         defaultCmd(cmd);
                 }
             }
         }
+    }
+
+    private void close()
+    {
+        cmds.close();
+        executor.shutdown();
+        try
+        {
+            executor.awaitTermination(5l, TimeUnit.SECONDS);
+        }
+        catch (InterruptedException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    private void schedulePlan()
+    {
+        // TODO Auto-generated method stub
+
+    }
+
+    private void stopPlan()
+    {
+        // TODO Auto-generated method stub
+
     }
 
     private void setLightState(ArrayList<String> cmdList)
@@ -137,6 +175,8 @@ public class CommandLineInterface
         System.out.println(format(SHOW_LIGHTS, "- lists all the Hue lights, that are registered with the current connected Hue bridge"));
         System.out.println(format(LIST_COLORS, "- lists the available colors"));
         System.out.println(format(SET_LIGHT_STATE, "- sets the state of the given Hue [lightId], [color] and the boolean [on/off-state]"));
+        System.out.println(format(SCHEDULE_PLAN, "- starts to schedule the plan defined in conf/plan.xml"));
+        System.out.println(format(STOP_PLAN, "- unschedule the plan, if running"));
         System.out.println();
         System.out.println("The Hue system is a registered trademark of Philips.");
     }
