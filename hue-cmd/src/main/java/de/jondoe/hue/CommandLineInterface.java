@@ -4,13 +4,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.philips.lighting.model.PHLight;
+
+import de.jondoe.hue.plan.SwitchPlan;
+import de.jondoe.hue.plan.SwitchPlanController;
+import de.jondoe.hue.plan.SwitchPlanFactory;
 
 public class CommandLineInterface
 {
@@ -23,14 +24,16 @@ public class CommandLineInterface
     private static final String SHOW_LIGHTS = "showLights";
     private static final String SET_LIGHT_STATE = "setLightState";
     private static final String LIST_COLORS = "listColors";
+    private static final String LIST_PLANS = "listPlans";
     private static final String STOP_PLAN = "stopPlan";
     private static final String SCHEDULE_PLAN = "startPlan";
     private HueCommands cmds;
-    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+    private SwitchPlanController controller;
 
     public CommandLineInterface(HueCommands hueCommands)
     {
         cmds = hueCommands;
+        controller = new SwitchPlanController(cmds);
     }
 
     public void interact()
@@ -78,6 +81,9 @@ public class CommandLineInterface
                     case STOP_PLAN:
                         stopPlan();
                         break;
+                    case LIST_PLANS:
+                        listPlans();
+                        break;
                     case EXIT:
                         close();
                         return;
@@ -88,39 +94,40 @@ public class CommandLineInterface
         }
     }
 
+    private void listPlans()
+    {
+        List<SwitchPlan> switchPlansFromXml = SwitchPlanFactory.readSwitchPlansFromXml();
+        switchPlansFromXml.forEach(plan -> System.out.print(plan.toString()));
+    }
+
     private void close()
     {
         cmds.close();
-        executor.shutdown();
-        try
-        {
-            executor.awaitTermination(5l, TimeUnit.SECONDS);
-        }
-        catch (InterruptedException e)
-        {
-            e.printStackTrace();
-        }
+        controller.close();
     }
 
     private void schedulePlan()
     {
-        // TODO Auto-generated method stub
-
+        List<SwitchPlan> switchPlansFromXml = SwitchPlanFactory.readSwitchPlansFromXml();
+        if (switchPlansFromXml.isEmpty())
+        {
+            throw new IllegalStateException("The conf/plans.xml is empty");
+        }
+        controller.scheduleAll(switchPlansFromXml);
     }
 
     private void stopPlan()
     {
-        // TODO Auto-generated method stub
-
+        controller.unscheduleAllPlans();
     }
 
     private void setLightState(ArrayList<String> cmdList)
     {
         if (cmdList.size() != 4)
         {
-            throw new IllegalArgumentException("Light-ID, CommonColor and State must be given!");
+            throw new IllegalArgumentException("Light-ID, CommonColor and LightState must be given!");
         }
-        cmds.setLightState(cmdList.get(1), cmdList.get(2), Boolean.parseBoolean(cmdList.get(3)));
+        cmds.setLightState(cmdList.get(1), cmdList.get(2), cmdList.get(3));
     }
 
     private void printLights()
@@ -174,9 +181,10 @@ public class CommandLineInterface
         System.out.println(format(CONNECT, "- connects to the Hue bridge with the given [MAC-Address]"));
         System.out.println(format(SHOW_LIGHTS, "- lists all the Hue lights, that are registered with the current connected Hue bridge"));
         System.out.println(format(LIST_COLORS, "- lists the available colors"));
-        System.out.println(format(SET_LIGHT_STATE, "- sets the state of the given Hue [lightId], [color] and the boolean [on/off-state]"));
-        System.out.println(format(SCHEDULE_PLAN, "- starts to schedule the plan defined in conf/plan.xml"));
-        System.out.println(format(STOP_PLAN, "- unschedule the plan, if running"));
+        System.out.println(format(LIST_PLANS, "- lists the available plans"));
+        System.out.println(format(SET_LIGHT_STATE, "- sets the state of the given Hue [lightId], [color] and the state [integer 0-255]"));
+        System.out.println(format(SCHEDULE_PLAN, "- starts to schedule all plans defined in conf/plans.xml"));
+        System.out.println(format(STOP_PLAN, "- unschedule the plans, if running"));
         System.out.println();
         System.out.println("The Hue system is a registered trademark of Philips.");
     }

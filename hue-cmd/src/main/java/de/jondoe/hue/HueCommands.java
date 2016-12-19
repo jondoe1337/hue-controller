@@ -3,6 +3,7 @@ package de.jondoe.hue;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.philips.lighting.hue.sdk.PHAccessPoint;
 import com.philips.lighting.hue.sdk.PHBridgeSearchManager;
@@ -73,17 +74,49 @@ public class HueCommands
         return bridge;
     }
 
-    public void setLightState(String lightId, String commonColour, boolean on)
+    public void setLightState(String lightId, CommonColors color, LightState lState)
     {
-        CommonColors color = CommonColors.valueOf(commonColour.toUpperCase());
+        Optional<PHLight> opLight = getLights().stream().filter(light -> light.getIdentifier().equals(lightId)).findFirst();
+        if (!opLight.isPresent())
+        {
+            throw new IllegalStateException("LightId unknown: " + lightId);
+        }
+
+        PHLight phLight = opLight.get();
 
         PHLightState lightState = new PHLightState();
-        float xy[] = PHUtilities.calculateXYFromRGB(color.getRed(), color.getGreen(), color.getBlue(), "LCT001");
+        float xy[] = PHUtilities.calculateXYFromRGB(color.getRed(), color.getGreen(), color.getBlue(), phLight.getModelNumber());
         lightState.setX(xy[0]);
         lightState.setY(xy[1]);
-        lightState.setOn(on);
+        switch (lState.getCommonState())
+        {
+            case ON:
+                lightState.setOn(true);
+                lightState.setBrightness(LightState.MAX);
+                break;
+            case DIMMED:
+                lightState.setOn(true);
+                lightState.setBrightness(lState.getBrightness());
+            case OFF:
+                lightState.setOn(false);
+                break;
+        }
+
+        String validateState = lightState.validateState();
+        if (validateState != null)
+        {
+            throw new IllegalStateException("Light state was not valid: " + validateState);
+        }
 
         phHueSDK.getSelectedBridge().updateLightState(lightId, lightState, null);
+    }
+
+    public void setLightState(String lightId, String color, String state)
+    {
+        CommonColors commonColour = CommonColors.valueOf(color.toUpperCase());
+        LightState lState = LightState.from(state);
+
+        setLightState(lightId, commonColour, lState);
     }
 
     public void close()
