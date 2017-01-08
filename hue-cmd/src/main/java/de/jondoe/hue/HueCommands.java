@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.philips.lighting.hue.listener.PHScheduleListener;
 import com.philips.lighting.hue.sdk.PHAccessPoint;
 import com.philips.lighting.hue.sdk.PHBridgeSearchManager;
 import com.philips.lighting.hue.sdk.PHHueSDK;
@@ -16,8 +17,33 @@ import com.philips.lighting.model.PHSchedule;
 
 public class HueCommands
 {
+    public enum Attributes
+    {
+     RANDOM_TIME("randomTime");
+
+        private Attributes(String name)
+        {
+            this.name = name;
+        }
+
+        private String name;
+
+        public static Attributes from(String s)
+        {
+            for (Attributes attr : Attributes.values())
+            {
+                if (attr.name.equals(s))
+                {
+                    return attr;
+                }
+            }
+            throw new IllegalArgumentException("unknwon constant: " + s);
+        }
+    }
+
     private PHHueSDK phHueSDK = PHHueSDK.getInstance();
     private Map<String, PHAccessPoint> macAddress2bridge = new HashMap<>();
+    private PHScheduleListener scheduleListener = new HueScheduleListener();
 
     public void discoverBridges()
     {
@@ -142,5 +168,32 @@ public class HueCommands
     public List<PHSchedule> getSchedules(boolean recurring)
     {
         return getSelectedBridge().getResourceCache().getAllSchedules(recurring);
+    }
+
+    public void updateSchedule(boolean recurring, String scheduleId, Map<Attributes, Object> key2value)
+    {
+        Optional<PHSchedule> opSchedule = getSchedules(recurring).stream().filter(schedule -> schedule.getIdentifier().equals(scheduleId))
+                                                                 .findFirst();
+        if (!opSchedule.isPresent())
+        {
+            throw new IllegalStateException("Schedule unknown: " + scheduleId);
+        }
+
+        PHSchedule schedule = opSchedule.get();
+
+        for (Attributes attr : key2value.keySet())
+        {
+            switch (attr)
+            {
+                case RANDOM_TIME:
+                    Object randomTimeObject = key2value.get(attr);
+                    schedule.setRandomTime((int) randomTimeObject);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown attribute: " + attr);
+            }
+        }
+
+        getSelectedBridge().updateSchedule(schedule, scheduleListener);
     }
 }

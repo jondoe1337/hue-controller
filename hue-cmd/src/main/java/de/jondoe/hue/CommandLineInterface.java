@@ -32,6 +32,7 @@ public class CommandLineInterface
     private static final String LIST_PLANS = "listPlans";
     private static final String STOP_PLAN = "stopPlan";
     private static final String SCHEDULE_PLAN = "startPlan";
+    private static final String UPDATE_SCHEDULE = "updateSchedule";
     private HueCommands cmds;
     private SwitchPlanController controller;
 
@@ -97,6 +98,9 @@ public class CommandLineInterface
                         case LIST_RECURRING_SCHEDULES:
                             printRecurringSchedules();
                             break;
+                        case UPDATE_SCHEDULE:
+                            updateSchedule(cmdList);
+                            break;
                         case EXIT:
                             close();
                             return;
@@ -109,6 +113,14 @@ public class CommandLineInterface
                     e.printStackTrace();
                 }
             }
+        }
+    }
+
+    private void updateSchedule(ArrayList<String> cmdList)
+    {
+        if (cmdList.size() <= 2)
+        {
+            throw new IllegalArgumentException("Params must be given!");
         }
     }
 
