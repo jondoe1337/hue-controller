@@ -12,6 +12,7 @@ import com.philips.lighting.hue.sdk.utilities.PHUtilities;
 import com.philips.lighting.model.PHBridge;
 import com.philips.lighting.model.PHLight;
 import com.philips.lighting.model.PHLightState;
+import com.philips.lighting.model.PHSchedule;
 
 public class HueCommands
 {
@@ -76,13 +77,7 @@ public class HueCommands
 
     public void setLightState(String lightId, CommonColors color, LightState lState)
     {
-        Optional<PHLight> opLight = getLights().stream().filter(light -> light.getIdentifier().equals(lightId)).findFirst();
-        if (!opLight.isPresent())
-        {
-            throw new IllegalStateException("LightId unknown: " + lightId);
-        }
-
-        PHLight phLight = opLight.get();
+        PHLight phLight = getLightIdFor(lightId);
 
         PHLightState lightState = new PHLightState();
         float xy[] = PHUtilities.calculateXYFromRGB(color.getRed(), color.getGreen(), color.getBlue(), phLight.getModelNumber());
@@ -92,11 +87,12 @@ public class HueCommands
         {
             case ON:
                 lightState.setOn(true);
-                lightState.setBrightness(LightState.MAX);
+                lightState.setBrightness(LightState.MAX_ALLOWED_BRIGHTNESS);
                 break;
             case DIMMED:
                 lightState.setOn(true);
                 lightState.setBrightness(lState.getBrightness());
+                break;
             case OFF:
                 lightState.setOn(false);
                 break;
@@ -111,6 +107,18 @@ public class HueCommands
         phHueSDK.getSelectedBridge().updateLightState(lightId, lightState, null);
     }
 
+    private PHLight getLightIdFor(String lightId)
+    {
+        Optional<PHLight> opLight = getLights().stream().filter(light -> light.getIdentifier().equals(lightId)).findFirst();
+        if (!opLight.isPresent())
+        {
+            throw new IllegalStateException("LightId unknown: " + lightId);
+        }
+
+        PHLight phLight = opLight.get();
+        return phLight;
+    }
+
     public void setLightState(String lightId, String color, String state)
     {
         CommonColors commonColour = CommonColors.valueOf(color.toUpperCase());
@@ -122,5 +130,17 @@ public class HueCommands
     public void close()
     {
         phHueSDK.destroySDK();
+    }
+
+    public PHLightState getLightState(String lightId)
+    {
+        PHLight light = getLightIdFor(lightId);
+        PHLightState lastKnownLightState = light.getLastKnownLightState();
+        return lastKnownLightState;
+    }
+
+    public List<PHSchedule> getSchedules(boolean recurring)
+    {
+        return getSelectedBridge().getResourceCache().getAllSchedules(recurring);
     }
 }

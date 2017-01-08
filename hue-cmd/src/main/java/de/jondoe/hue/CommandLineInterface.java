@@ -7,7 +7,10 @@ import java.util.Scanner;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
+import com.philips.lighting.hue.sdk.utilities.PHDateTimePattern.RecurringDay;
 import com.philips.lighting.model.PHLight;
+import com.philips.lighting.model.PHLightState;
+import com.philips.lighting.model.PHSchedule;
 
 import de.jondoe.hue.plan.SwitchPlan;
 import de.jondoe.hue.plan.SwitchPlanController;
@@ -21,7 +24,9 @@ public class CommandLineInterface
     private static final String DISCOVER = "discover";
     private static final String CONNECT_LAST = "last";
     private static final String CONNECT = "connect";
-    private static final String SHOW_LIGHTS = "showLights";
+    private static final String LIST_RECURRING_SCHEDULES = "listRecurringSchedules";
+    private static final String GET_LIGHTS = "getLights";
+    private static final String GET_LIGHT_STATE = "getLightState";
     private static final String SET_LIGHT_STATE = "setLightState";
     private static final String LIST_COLORS = "listColors";
     private static final String LIST_PLANS = "listPlans";
@@ -43,55 +48,115 @@ public class CommandLineInterface
             Splitter splitter = Splitter.on(' ').trimResults().omitEmptyStrings();
             while (true)
             {
-                System.out.print("~");
-                String inputString = scanner.nextLine();
-                ArrayList<String> cmdList = Lists.newArrayList(splitter.split(inputString));
+                try
+                {
+                    System.out.print("~");
+                    String inputString = scanner.nextLine();
+                    ArrayList<String> cmdList = Lists.newArrayList(splitter.split(inputString));
 
-                if (cmdList.isEmpty())
-                {
-                    continue;
+                    if (cmdList.isEmpty())
+                    {
+                        continue;
+                    }
+                    String cmd = cmdList.get(0);
+                    switch (cmd)
+                    {
+                        case HELP:
+                            printHelp();
+                            break;
+                        case DISCOVER:
+                            cmds.discoverBridges();
+                            break;
+                        case CONNECT_LAST:
+                            connectToMostRecentBridge();
+                            break;
+                        case CONNECT:
+                            connectToNewBridge(cmdList);
+                            break;
+                        case GET_LIGHTS:
+                            printLights();
+                            break;
+                        case GET_LIGHT_STATE:
+                            printLightState(cmdList);
+                            break;
+                        case SET_LIGHT_STATE:
+                            setLightState(cmdList);
+                            break;
+                        case LIST_COLORS:
+                            System.out.println(Arrays.asList(CommonColors.values()));
+                            break;
+                        case SCHEDULE_PLAN:
+                            schedulePlan();
+                            break;
+                        case STOP_PLAN:
+                            stopPlan();
+                            break;
+                        case LIST_PLANS:
+                            listPlans();
+                            break;
+                        case LIST_RECURRING_SCHEDULES:
+                            printRecurringSchedules();
+                            break;
+                        case EXIT:
+                            close();
+                            return;
+                        default:
+                            defaultCmd(cmd);
+                    }
                 }
-                String cmd = cmdList.get(0);
-                switch (cmd)
+                catch (Exception e)
                 {
-                    case HELP:
-                        printHelp();
-                        break;
-                    case DISCOVER:
-                        cmds.discoverBridges();
-                        break;
-                    case CONNECT_LAST:
-                        connectToMostRecentBridge();
-                        break;
-                    case CONNECT:
-                        connectToNewBridge(cmdList);
-                        break;
-                    case SHOW_LIGHTS:
-                        printLights();
-                        break;
-                    case SET_LIGHT_STATE:
-                        setLightState(cmdList);
-                        break;
-                    case LIST_COLORS:
-                        System.out.println(Arrays.asList(CommonColors.values()));
-                        break;
-                    case SCHEDULE_PLAN:
-                        schedulePlan();
-                        break;
-                    case STOP_PLAN:
-                        stopPlan();
-                        break;
-                    case LIST_PLANS:
-                        listPlans();
-                        break;
-                    case EXIT:
-                        close();
-                        return;
-                    default:
-                        defaultCmd(cmd);
+                    e.printStackTrace();
                 }
             }
         }
+    }
+
+    private void printRecurringSchedules()
+    {
+        for (PHSchedule phSchedule : cmds.getSchedules(true))
+        {
+            System.out.println(String.format("Identifier: %s", phSchedule.getIdentifier()));
+            System.out.println(String.format("Date: %s", phSchedule.getDate().toString()));
+            System.out.println(String.format("LightID: %s", phSchedule.getLightIdentifier()));
+            System.out.println(String.format("LightState ---\n%s", getLightStateAsString(phSchedule.getLightState())));
+            System.out.println(String.format("Name: %s", phSchedule.getName()));
+            System.out.println(String.format("RecurringDays: %s", RecurringDay.fromValue(phSchedule.getRecurringDays()).name()));
+            System.out.println(String.format("RandomTime: %d", phSchedule.getRandomTime()));
+            System.out.println(String.format("LocalTime: %b", phSchedule.getLocalTime()));
+            System.out.println("-------");
+        }
+    }
+
+    private void printLightState(ArrayList<String> cmdList)
+    {
+        if (cmdList.size() != 2)
+        {
+            throw new IllegalArgumentException("Light-ID must be given!");
+        }
+        PHLightState lightState = cmds.getLightState(cmdList.get(1));
+        if (lightState == null)
+        {
+            System.out.println("Light-State unknown.");
+        }
+        else
+        {
+            System.out.println(getLightStateAsString(lightState));
+        }
+    }
+
+    private String getLightStateAsString(PHLightState lightState)
+    {
+        if (lightState == null)
+        {
+            return "unknown";
+        }
+        String retVal = String.format("Hue: %d", lightState.getHue()) //
+                + String.format("Brightness: %d", lightState.getBrightness()) //
+                + String.format("X: %f", lightState.getX()) //
+                + String.format("Y: %f", lightState.getY()) //
+                + String.format("On: %b", lightState.isOn());
+        return retVal;
     }
 
     private void listPlans()
@@ -179,12 +244,14 @@ public class CommandLineInterface
         System.out.println(format(DISCOVER, "- starts discovery mode to find Hue bridges"));
         System.out.println(format(CONNECT_LAST, "- connects to most recent Hue bridge"));
         System.out.println(format(CONNECT, "- connects to the Hue bridge with the given [MAC-Address]"));
-        System.out.println(format(SHOW_LIGHTS, "- lists all the Hue lights, that are registered with the current connected Hue bridge"));
+        System.out.println(format(GET_LIGHTS, "- lists all the Hue lights, that are registered with the current connected Hue bridge"));
         System.out.println(format(LIST_COLORS, "- lists the available colors"));
         System.out.println(format(LIST_PLANS, "- lists the available plans"));
+        System.out.println(format(GET_LIGHT_STATE, "- gets the las known state of the given Hue [lightId]"));
         System.out.println(format(SET_LIGHT_STATE, "- sets the state of the given Hue [lightId], [color] and the state [integer 0-255]"));
         System.out.println(format(SCHEDULE_PLAN, "- starts to schedule all plans defined in conf/plans.xml"));
         System.out.println(format(STOP_PLAN, "- unschedule the plans, if running"));
+        System.out.println(format(LIST_RECURRING_SCHEDULES, "- lists the available schedules"));
         System.out.println();
         System.out.println("The Hue system is a registered trademark of Philips.");
     }

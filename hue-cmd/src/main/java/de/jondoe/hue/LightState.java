@@ -6,20 +6,20 @@ import com.google.common.collect.Range;
 public class LightState
 {
     private static final String ERROR_MESSAGE = "Lightstate should be an integer of 0-255";
-    public static final Integer MAX = 254;
-    private static final Range<Integer> VALID_RANGE = Range.closedOpen(0, MAX);
+    public static final Integer MAX_ALLOWED_BRIGHTNESS = 254;
+    private static final Range<Integer> VALID_RANGE = Range.closed(0, MAX_ALLOWED_BRIGHTNESS);
 
     public static enum CommonState
     {
      ON, OFF, DIMMED;
     }
 
-    private LightState()
+    private LightState(int state)
     {
-        /* use static factory method */
+        this.lightstate = state;
     }
 
-    private int lightstate;
+    private final int lightstate;
 
     public CommonState getCommonState()
     {
@@ -27,7 +27,7 @@ public class LightState
         {
             return CommonState.OFF;
         }
-        else if (lightstate >= MAX)
+        else if (lightstate >= MAX_ALLOWED_BRIGHTNESS - 1)
         {
             return CommonState.ON;
         }
@@ -50,7 +50,7 @@ public class LightState
         {
             throw new IllegalArgumentException(ERROR_MESSAGE);
         }
-        return new LightState();
+        return new LightState(integerState);
     }
 
     @Override
