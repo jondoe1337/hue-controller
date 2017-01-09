@@ -134,7 +134,7 @@ public class CommandLineInterface
             case SUB_LIST_ATTRIBUTES:
                 System.out.println("Available attributes:\n"
                         + Arrays.stream(HueCommands.ScheduleAttributes.values()).map(attr -> attr.getName() + " = " + attr.getDesc())
-                        .collect(Collectors.joining("\n")));
+                                .collect(Collectors.joining("\n")));
                 break;
             case SUB_UPDATE:
                 String scheduleId = cmdList.get(2);
@@ -307,6 +307,8 @@ public class CommandLineInterface
         System.out.println(format(SCHEDULE_PLAN, "- starts to schedule all plans defined in conf/plans.xml"));
         System.out.println(format(STOP_PLAN, "- unschedule the plans, if running"));
         System.out.println(format(LIST_RECURRING_SCHEDULES, "- lists the available schedules"));
+        System.out.println(format(UPDATE_SCHEDULE,
+                                  "- updates the available schedules. Subcommands: [" + SUB_LIST_ATTRIBUTES + ", " + SUB_UPDATE + "]"));
         System.out.println();
         System.out.println("The Hue system is a registered trademark of Philips.");
     }

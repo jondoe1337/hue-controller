@@ -14,12 +14,13 @@ import com.philips.lighting.model.PHBridge;
 import com.philips.lighting.model.PHLight;
 import com.philips.lighting.model.PHLightState;
 import com.philips.lighting.model.PHSchedule;
+import com.philips.lighting.model.PHSchedule.RecurringDay;
 
 public class HueCommands
 {
     public enum ScheduleAttributes
     {
-        RANDOM_TIME("randomTime", "Random delta in seconds. Params: (int)");
+     RANDOM_TIME("randomTime", "Random delta in seconds. Params: (int)");
 
         private ScheduleAttributes(String name, String desc)
         {
@@ -205,7 +206,25 @@ public class HueCommands
                     throw new IllegalArgumentException("Unknown attribute: " + attr);
             }
         }
+        PHSchedule.RecurringDay test = RecurringDay.RECURRING_ALL_DAY;
 
-        getSelectedBridge().updateSchedule(schedule, scheduleListener);
+        // FIXME: This does not work
+        // getSelectedBridge().updateSchedule(schedule, scheduleListener);
+
+        // try
+        // {
+        // HttpResponse<JsonNode> asJson = Unirest.get("http://" + HueProperties.getLastConnectedIP() + "/api/" + HueProperties.getUsername()
+        // + "/schedules").asJson();
+        // System.out.println(asJson.getBody().toString());
+        //
+        // Unirest.put("http://" + HueProperties.getLastConnectedIP() + "/api/" + HueProperties.getUsername() + "/schedules/" + scheduleId)
+        // .field("parameter", "value").field("foo", "bar").asJson();
+        // }
+        // catch (UnirestException e)
+        // {
+        // // TODO Auto-generated catch block
+        // e.printStackTrace();
+        // }
+
     }
 }
