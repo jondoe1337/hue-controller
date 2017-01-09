@@ -2,8 +2,12 @@ package de.jondoe.hue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
@@ -12,6 +16,7 @@ import com.philips.lighting.model.PHLight;
 import com.philips.lighting.model.PHLightState;
 import com.philips.lighting.model.PHSchedule;
 
+import de.jondoe.hue.HueCommands.ScheduleAttributes;
 import de.jondoe.hue.plan.SwitchPlan;
 import de.jondoe.hue.plan.SwitchPlanController;
 import de.jondoe.hue.plan.SwitchPlanFactory;
@@ -33,6 +38,8 @@ public class CommandLineInterface
     private static final String STOP_PLAN = "stopPlan";
     private static final String SCHEDULE_PLAN = "startPlan";
     private static final String UPDATE_SCHEDULE = "updateSchedule";
+    private static final String SUB_LIST_ATTRIBUTES = "listAttributes";
+    private static final String SUB_UPDATE = "update";
     private HueCommands cmds;
     private SwitchPlanController controller;
 
@@ -118,10 +125,46 @@ public class CommandLineInterface
 
     private void updateSchedule(ArrayList<String> cmdList)
     {
-        if (cmdList.size() <= 2)
+        if (cmdList.size() < 2)
         {
-            throw new IllegalArgumentException("Params must be given!");
+            System.out.println("Available subcommands: " + SUB_LIST_ATTRIBUTES + " " + SUB_UPDATE);
         }
+        switch (cmdList.get(1))
+        {
+            case SUB_LIST_ATTRIBUTES:
+                System.out.println("Available attributes:\n"
+                        + Arrays.stream(HueCommands.ScheduleAttributes.values()).map(attr -> attr.getName() + " = " + attr.getDesc())
+                        .collect(Collectors.joining("\n")));
+                break;
+            case SUB_UPDATE:
+                String scheduleId = cmdList.get(2);
+                Map<ScheduleAttributes, Object> key2value = createAttributeMap(cmdList.subList(3, cmdList.size()));
+                cmds.updateSchedule(true, scheduleId, key2value);
+                break;
+            default:
+                System.out.println("Unknown subcommand: " + cmdList.get(1));
+        }
+    }
+
+    private Map<ScheduleAttributes, Object> createAttributeMap(List<String> subList)
+    {
+        Map<ScheduleAttributes, Object> retVal = new HashMap<>();
+        for (Iterator<String> iterator = subList.iterator(); iterator.hasNext();)
+        {
+            String string = iterator.next();
+            ScheduleAttributes attr = ScheduleAttributes.from(string);
+            switch (attr)
+            {
+                case RANDOM_TIME:
+                    int randTime = Integer.valueOf(iterator.next());
+                    retVal.put(attr, randTime);
+                    break;
+                default:
+                    throw new IllegalArgumentException("ScheduleAttribute not mapped yet: " + attr);
+            }
+
+        }
+        return retVal;
     }
 
     private void printRecurringSchedules()

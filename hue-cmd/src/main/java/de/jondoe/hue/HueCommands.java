@@ -17,27 +17,39 @@ import com.philips.lighting.model.PHSchedule;
 
 public class HueCommands
 {
-    public enum Attributes
+    public enum ScheduleAttributes
     {
-     RANDOM_TIME("randomTime");
+        RANDOM_TIME("randomTime", "Random delta in seconds. Params: (int)");
 
-        private Attributes(String name)
+        private ScheduleAttributes(String name, String desc)
         {
             this.name = name;
+            this.desc = desc;
         }
 
         private String name;
+        private String desc;
 
-        public static Attributes from(String s)
+        public String getName()
         {
-            for (Attributes attr : Attributes.values())
+            return name;
+        }
+
+        public String getDesc()
+        {
+            return desc;
+        }
+
+        public static ScheduleAttributes from(String s)
+        {
+            for (ScheduleAttributes attr : ScheduleAttributes.values())
             {
                 if (attr.name.equals(s))
                 {
                     return attr;
                 }
             }
-            throw new IllegalArgumentException("unknwon constant: " + s);
+            throw new IllegalArgumentException("Unknwon attribute: " + s);
         }
     }
 
@@ -170,7 +182,7 @@ public class HueCommands
         return getSelectedBridge().getResourceCache().getAllSchedules(recurring);
     }
 
-    public void updateSchedule(boolean recurring, String scheduleId, Map<Attributes, Object> key2value)
+    public void updateSchedule(boolean recurring, String scheduleId, Map<ScheduleAttributes, Object> key2value)
     {
         Optional<PHSchedule> opSchedule = getSchedules(recurring).stream().filter(schedule -> schedule.getIdentifier().equals(scheduleId))
                                                                  .findFirst();
@@ -181,7 +193,7 @@ public class HueCommands
 
         PHSchedule schedule = opSchedule.get();
 
-        for (Attributes attr : key2value.keySet())
+        for (ScheduleAttributes attr : key2value.keySet())
         {
             switch (attr)
             {
